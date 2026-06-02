@@ -79,3 +79,8 @@ report.md
 *xccdf.xml
 check-results.txt
 kitchen.local.ec2.yml
+
+# Beads / Dolt files (added by bd init)
+.dolt/
+*.db
+.beads-credential-key
