@@ -1,117 +1,164 @@
-## SAF TEMPLATE FILE
+# oracle-database-19c-stig-baseline
 
-(Below is an example of the README that should be in place for a SAF-developed InSpec profile -- requirements, running instructions, etc.)
+InSpec profile to validate secure configuration of Oracle Database 19c against the DISA Oracle Database 19c Security Technical Implementation Guide (STIG).
 
-InSpec profile to validate the secure configuration of a Kubernetes node against [DISA's](https://iase.disa.mil/stigs/Pages/index.aspx) Kubernetes Secure Technical Implementation Guide (STIG) Version 1 Release 1.
-
-## Getting Started  
-It is intended and recommended that InSpec and this profile be run from a __"runner"__ host (such as a DevOps orchestration server, an administrative management system, or a developer's workstation/laptop) against the target remotely using the SSH transport.
-
-__For the best security of the runner, always install on the runner the _latest version_ of InSpec and supporting Ruby language components.__
-
-Latest versions and installation options are available at the [InSpec](http://inspec.io/) site.
-
-The Kubernetes STIG includes security requirements for both the Kubernetes cluster itself and the nodes that comprise it. This profile includes the checks for the node portion. It is intended  to be used in conjunction with the <b>[Kubernetes Cluster](https://github.com/mitre/k8s-cluster-stig-baseline)</b> profile that performs automated compliance checks of the Kubernetes cluster.
+This profile contains 96 controls in `controls/`. Controls use Oracle SQL checks through `oracledb_session(...)` and environment-specific values from `inspec.yml` or an input override file.
 
 ## Getting Started
 
-### Requirements
-
-#### Kubernetes Cluster
-- Kubernetes Platform deployment
-- Access to the Kubernetes Node over ssh
-- Account providing appropriate permissions to perform audit scan
-
-
-#### Required software on the InSpec Runner
-- git
-- [InSpec](https://www.chef.io/products/chef-inspec/)
-
-### Setup Environment on the InSpec Runner
-#### Install InSpec
-Go to https://www.inspec.io/downloads/ and consult the documentation for your Operating System to download and install InSpec.
-
-#### Ensure InSpec version is at least 4.23.10 
-```sh
-inspec --version
-```
-### Profile Input Values
-The default values for profile inputs are given in `inspec.yml`. These values can be overridden by creating an `inputs.yml` file -- see [the InSpec documentation for inputs](https://docs.chef.io/inspec/inputs/).
-
-```yml
-  - name: manifests_path
-    description: 'Path to Kubernetes manifest files on the target node'
-    type: string
-    value: '/etc/kubernetes/manifests'
-    required: true
-
-  - name: pki_path
-    description: 'Path to Kubernetes PKI files on the target node'
-    type: string
-    value: '/etc/kubernetes/pki/'
-    required: true
-
-  - name: kubeadm_path
-    description: 'Path to kubeadm file on the target node'
-    type: string
-    value: '/usr/local/bin/kubeadm'
-    required: true
-
-  - name: kubectl_path
-    description: 'Path to kubectl on the target node'
-    type: string
-    value: '/usr/local/bin/kubectl'
-    required: true
-
-  - name: kubernetes_conf_files
-    description: 'Path to Kubernetes conf files on the target node'
-    type: array
-    value:
-        - /etc/kubernetes/admin.conf
-        - /etc/kubernetes/scheduler.conf
-        - /etc/kubernetes/controller-manager.conf
-    required: true
-
-```
-
-### How to execute this instance  
-(See: https://www.inspec.io/docs/reference/cli/)
-
-**Execute the Kubernetes Node profile on each node in the cluster. The profile will adapt its checks based on the Kubernetes components located on the node.**
-
-#### Execute a single Control in the Profile 
-**Note**: Replace the profile's directory name - e.g. - `<Profile>` with `.` if currently in the profile's root directory.
+Install current Chef InSpec and supporting Ruby components on the runner. Installation options are available from the [Chef InSpec documentation](https://docs.chef.io/inspec/).
 
 ```sh
-inspec exec <Profile> -t ssh://TARGET_USERNAME@TARGET_IP:TARGET_PORT --sudo -i <your_PEM_KEY> --controls=<control_id> --show-progress
+bundle install
+bundle exec rake inspec:check
 ```
 
-#### Execute a Single Control and save results as JSON 
+## Tailoring to Your Environment
+
+Create an input file such as `inputs.yml` before running the profile. Do not commit real credentials or target-specific secrets.
+
+More information about inputs is available in the [InSpec inputs documentation](https://docs.chef.io/inspec/profiles/inputs/).
+
+```yaml
+# Username Oracle DB, for example: system
+user: ''
+
+# Password Oracle DB
+password: ''
+
+# Hostname or IP for Oracle DB, for example: localhost
+host: ''
+
+# Oracle service name, for example: ORCLCDB
+service: ''
+
+# Location of sqlplus, for example: /opt/oracle/product/19c/dbhome_1/bin/sqlplus
+sqlplus_bin: ''
+
+# Set based on the Oracle 19c audit configuration
+standard_auditing_used: true
+unified_auditing_used: false
+
+# Organization-specific allow lists
+allowed_db_links: []
+allowed_dbadmin_users: []
+users_allowed_access_to_public: []
+allowed_users_dba_role: []
+allowed_users_system_tablespace: []
+allowed_application_owners: []
+allowed_unlocked_oracledb_accounts: []
+users_allowed_access_to_dictionary_table: []
+allowed_users_with_admin_privs: []
+allowed_audit_users: []
+allowed_dbaobject_owners: []
+allowed_oracledb_components: []
+allowed_oracledb_components_integrated_into_dbms: []
+oracle_dbas: []
+emergency_profile_list: []
+
+# Organization-specific profile parameter thresholds
+failed_logon_attempts: 3
+password_life_time: 35
+account_inactivity_age: 35
+```
+
+## Running This Profile
+
+### Using SSH
+
+Run all controls from a local checkout:
+
 ```sh
-inspec exec <Profile> -t ssh://TARGET_USERNAME@TARGET_IP:TARGET_PORT --sudo -i <your_PEM_KEY> --controls=<control_id> --show-progress --reporter json:results.json
+bundle exec inspec exec . -t ssh://<user>@<host>:<port> --sudo --input-file=inputs.yml --reporter=cli json:oracle-database-19c-stig-baseline-results.json
 ```
 
-#### Execute All Controls in the Profile 
+Run one control from a local checkout:
+
 ```sh
-inspec exec <Profile>  -t ssh://TARGET_USERNAME@TARGET_IP:TARGET_PORT --sudo -i <your_PEM_KEY> --show-progress
+bundle exec inspec exec . -t ssh://<user>@<host>:<port> --sudo --input-file=inputs.yml --controls=SV-270495
 ```
 
-#### Execute all the Controls in the Profile and save results as JSON 
+Run from the GitHub archive:
+
 ```sh
-inspec exec <Profile> -t ssh://TARGET_USERNAME@TARGET_IP:TARGET_PORT --sudo -i <your_PEM_KEY> --show-progress  --reporter json:results.json
+inspec exec https://github.com/mitre/oracle-database-19c-stig-baseline/archive/master.tar.gz -t ssh://<user>@<host>:<port> --sudo --input-file=inputs.yml --reporter=cli json:oracle-database-19c-stig-baseline-results.json
 ```
 
-## Check Overview
+### Using WinRM
 
-**Kubernetes Components**
+```sh
+inspec exec https://github.com/mitre/oracle-database-19c-stig-baseline/archive/master.tar.gz -t winrm://<host> --user '<admin-account>' --password='<password>' --input-file=inputs.yml --reporter=cli json:oracle-database-19c-stig-baseline-results.json
+```
 
-This profile evaluates the STIG compliance of the following Kubernetes Components by evaluating their process configuration:
+### Using Docker
 
-- kube-apiserver
-- kube-controller-manager
-- kube-scheduler
-- kubelet
-- kube-proxy
-- etcd
+```sh
+bundle exec inspec exec . -t docker://<containerid> --input-file=inputs.yml --reporter=cli json:oracle-database-19c-stig-baseline-results.json
+```
 
-If these components are not in use in the target cluster or named differently, the profile has to be adapted for the target K8S distribution using an [InSpec Profile Overlay](https://blog.chef.io/understanding-inspec-profile-inheritance).
+Docker runs require a target container with access to the Oracle Database 19c instance and the configured `sqlplus_bin`.
+
+Full command options are available in the [InSpec CLI documentation](https://docs.chef.io/inspec/cli/).
+
+## Running from a Local Archive
+
+Create a reusable archive when the runner cannot always reach GitHub.
+
+```sh
+mkdir profiles
+cd profiles
+git clone https://github.com/mitre/oracle-database-19c-stig-baseline
+cd oracle-database-19c-stig-baseline
+bundle install
+bundle exec inspec archive . --overwrite
+bundle exec inspec exec <generated-archive>.tar.gz -t ssh://<user>@<host>:<port> --sudo --input-file=inputs.yml --reporter=cli json:oracle-database-19c-stig-baseline-results.json
+```
+
+Refresh the archive after profile updates:
+
+```sh
+cd oracle-database-19c-stig-baseline
+git pull
+bundle install
+bundle exec inspec archive . --overwrite
+```
+
+## Local Checks
+
+```sh
+bundle exec rake inspec:check
+bundle exec rake lint
+bundle exec rake pre_commit_checks
+```
+
+## Viewing the JSON Results
+
+Load the JSON results file into [Heimdall Lite](https://heimdall-lite.mitre.org/) for an interactive view of the InSpec results.
+
+The JSON results file can also be loaded into a [full Heimdall server](https://github.com/mitre/heimdall) to store and compare multiple profile runs.
+
+## Contributing and Getting Help
+
+To report a bug or feature request, open an [issue](https://github.com/mitre/oracle-database-19c-stig-baseline/issues/new).
+
+### NOTICE
+
+© 2018-2020 The MITRE Corporation.
+
+Approved for Public Release; Distribution Unlimited. Case Number 18-3678.
+
+### NOTICE
+
+MITRE hereby grants express written permission to use, reproduce, distribute, modify, and otherwise leverage this software to the extent permitted by the licensed terms provided in the LICENSE.md file included with this project.
+
+### NOTICE
+
+This software was produced for the U. S. Government under Contract Number HHSM-500-2012-00008I, and is subject to Federal Acquisition Regulation Clause 52.227-14, Rights in Data-General.
+
+No other use other than that granted to the U. S. Government, or to those acting on behalf of the U. S. Government under that Clause is authorized without the express written permission of The MITRE Corporation.
+
+For further information, please contact The MITRE Corporation, Contracts Management Office, 7515 Colshire Drive, McLean, VA  22102-7539, (703) 983-6000.
+
+### NOTICE
+
+DISA STIGs are published by DISA, see: <https://public.cyber.mil/stigs/>
