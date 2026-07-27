@@ -24,7 +24,7 @@ If code exists that allows invalid data to be acted upon or input into the datab
 If field definitions do not exist in the database, this is a finding.
 
 If fields do not contain enabled constraints where required, this is a finding.'
-  desc 'fix', %q(Modify database code to properly validate data before it is put into the database or acted upon by the database.
+  desc 'fix', %q{Modify database code to properly validate data before it is put into the database or acted upon by the database.
 
 Modify database to contain field definitions for each field in the database.
 
@@ -99,7 +99,7 @@ empno NUMBER(5) CONSTRAINT emp.pk PRIMARY KEY, . . . ;
 ALTER TABLE emp
 ADD CONSTRAINT emp.pk PRIMARY KEY (empno);
 
-An ALTER TABLE statement that defines and attempts to enable an integrity constraint can fail because rows of the table violate the integrity constraint. If this case, the statement is rolled back, and the constraint definition is not stored and not enabled.)
+An ALTER TABLE statement that defines and attempts to enable an integrity constraint can fail because rows of the table violate the integrity constraint. If this case, the statement is rolled back, and the constraint definition is not stored and not enabled.}
   impact 0.5
   tag gtitle: 'SRG-APP-000251-DB-000160'
   tag gid: 'V-270580'
