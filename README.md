@@ -100,6 +100,33 @@ Docker runs require a target container with access to the Oracle Database 19c in
 
 Full command options are available in the [InSpec CLI documentation](https://docs.chef.io/inspec/cli/).
 
+## TLS / TCPS Connections
+
+Controls in this profile connect via `oracledb_session(...)`, which builds a
+connect string of the form `user/password@host:port/service` and hands it to the
+client named by `sqlplus_bin`. How you configure TLS (encryption in transit)
+depends on **which client** that binary is:
+
+- **Real `sqlplus` / `sqlcl` (Oracle Instant Client).** For a TCPS/SSL connection
+  these clients resolve a **TNS alias** from `tnsnames.ora`, where the
+  `(DESCRIPTION=(ADDRESS=(PROTOCOL=TCPS)...))` connect descriptor and wallet/SSL
+  settings live. Newer Chef InSpec (7.x) exposes a `tns_alias:` input on
+  `oracledb_session` for exactly this case, and its documentation recommends it
+  for TCPS/SSL. If you run this profile with a real Oracle client against a
+  TCPS listener, configure `tnsnames.ora` + a wallet and pass the alias.
+
+  > Note: the `tns_alias:` option is **not** present in older InSpec
+  > (`inspec-core` 6.x and earlier); on those versions `oracledb_session` only
+  > emits the plain `host:port/service` form and silently ignores TNS.
+
+- **A pure-client shim (e.g. `oraquery`, used by the Cloud.gov overlay).** When
+  `sqlplus_bin` points at a lightweight client that does **not** read
+  `tnsnames.ora`, `tns_alias` does not apply. TLS is instead driven explicitly by
+  the client (for `oraquery`: `ORAQUERY_TLS=verify-ca` plus a PEM CA bundle via
+  `ORAQUERY_CA_BUNDLE`), and the connection targets the TCPS port directly
+  (Oracle serves TCPS on **2484**, plaintext on **1521**). In this mode make sure
+  the `port` input is set to the TCPS port so it reaches the connect string.
+
 ## Running from a Local Archive
 
 Create a reusable archive when the runner cannot always reach GitHub.
