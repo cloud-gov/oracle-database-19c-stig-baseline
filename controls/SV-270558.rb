@@ -45,4 +45,12 @@ $ lsnrctl stat'
   tag 'documentable'
   tag cci: ['CCI-000382', 'CCI-001762']
   tag nist: ['CM-7 b', 'CM-7 (1) (b)']
+
+  # No automated assertion is defined for this control: it requires manual review
+  # of system documentation / organizational policy (or is not tenant-verifiable
+  # on managed RDS). Emit an explicit skip so the control is reported as "not
+  # reviewed" rather than silently passing with zero tests.
+  describe "SV-270558: manual review required (no automated test defined)" do
+    skip "SV-270558 requires manual review; no automated assertion is defined."
+  end
 end

@@ -113,4 +113,12 @@ https://docs.oracle.com/en/database/oracle/oracle-database/19/netrf/parameters-f
   tag 'documentable'
   tag cci: ['CCI-000196']
   tag nist: ['IA-5 (1) (c)']
+
+  # No automated assertion is defined for this control: it requires manual review
+  # of system documentation / organizational policy (or is not tenant-verifiable
+  # on managed RDS). Emit an explicit skip so the control is reported as "not
+  # reviewed" rather than silently passing with zero tests.
+  describe "SV-270564: manual review required (no automated test defined)" do
+    skip "SV-270564 requires manual review; no automated assertion is defined."
+  end
 end

@@ -35,4 +35,12 @@ If any user/role who is not an authorized system administrator with a need to kn
   tag 'documentable'
   tag cci: ['CCI-001090']
   tag nist: ['SC-4']
+
+  # No automated assertion is defined for this control: it requires manual review
+  # of system documentation / organizational policy (or is not tenant-verifiable
+  # on managed RDS). Emit an explicit skip so the control is reported as "not
+  # reviewed" rather than silently passing with zero tests.
+  describe "SV-270578: manual review required (no automated test defined)" do
+    skip "SV-270578 requires manual review; no automated assertion is defined."
+  end
 end

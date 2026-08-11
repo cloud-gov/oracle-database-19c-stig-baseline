@@ -35,4 +35,12 @@ Configure the database to support TLS protocols and the Oracle Wallet to store a
   tag 'documentable'
   tag cci: ['CCI-004909']
   tag nist: ['SC-17 b']
+
+  # No automated assertion is defined for this control: it requires manual review
+  # of system documentation / organizational policy (or is not tenant-verifiable
+  # on managed RDS). Emit an explicit skip so the control is reported as "not
+  # reviewed" rather than silently passing with zero tests.
+  describe "SV-270589: manual review required (no automated test defined)" do
+    skip "SV-270589 requires manual review; no automated assertion is defined."
+  end
 end

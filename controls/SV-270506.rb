@@ -60,4 +60,12 @@ https://docs.oracle.com/en/database/oracle/oracle-database/19/sqlrf/ALTER-TABLES
   tag 'documentable'
   tag cci: ['CCI-001849']
   tag nist: ['AU-4']
+
+  # This control embeds a SQL check (see the "check" text above) and is a
+  # candidate for automated assessment via oracledb_session, but that assertion
+  # has NOT yet been implemented/validated. Mark it skipped PENDING that review +
+  # assessment work rather than leaving it as a silent zero-test pass.
+  describe "SV-270506: automated assessment pending (SQL check not yet implemented)" do
+    skip "SV-270506 is SQL-assessable but not yet automated; skipped pending review and implementation."
+  end
 end

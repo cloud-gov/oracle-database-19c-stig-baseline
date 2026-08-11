@@ -43,4 +43,12 @@ More information can be found at https://docs.oracle.com/en/database/oracle/orac
   tag 'documentable'
   tag cci: ['CCI-000186']
   tag nist: ['IA-5 (2) (a) (1)']
+
+  # No automated assertion is defined for this control: it requires manual review
+  # of system documentation / organizational policy (or is not tenant-verifiable
+  # on managed RDS). Emit an explicit skip so the control is reported as "not
+  # reviewed" rather than silently passing with zero tests.
+  describe "SV-270566: manual review required (no automated test defined)" do
+    skip "SV-270566 requires manual review; no automated assertion is defined."
+  end
 end

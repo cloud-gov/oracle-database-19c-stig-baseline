@@ -16,4 +16,12 @@ If user accounts are not being mapped to authenticated identities, this is a fin
   tag 'documentable'
   tag cci: ['CCI-000187']
   tag nist: ['IA-5 (2) (a) (2)']
+
+  # No automated assertion is defined for this control: it requires manual review
+  # of system documentation / organizational policy (or is not tenant-verifiable
+  # on managed RDS). Emit an explicit skip so the control is reported as "not
+  # reviewed" rather than silently passing with zero tests.
+  describe "SV-270567: manual review required (no automated test defined)" do
+    skip "SV-270567 requires manual review; no automated assertion is defined."
+  end
 end
