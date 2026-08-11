@@ -49,7 +49,7 @@ Authorize and document user access requirements to the directory outside of the 
   tag 'check'
   tag 'fix'
 
-  sql = oracledb_session(user: input('user'), password: input('password'), host: input('host'), service: input('service'), sqlplus_bin: input('sqlplus_bin'))
+  sql = oracledb_session(user: input('user'), password: input('password'), host: input('host'), port: input('port'), service: input('service'), sqlplus_bin: input('sqlplus_bin'))
 
   get_diagnostic_dest = sql.query("select value from v$parameter where name = 'diagnostic_dest';").column('value')
 

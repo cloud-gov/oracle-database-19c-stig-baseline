@@ -69,7 +69,7 @@ If the value of the count returned is less than 3 and a RAID storage device is n
   tag 'check'
   tag 'fix'
 
-  sql = oracledb_session(user: input('user'), password: input('password'), host: input('host'), service: input('service'), sqlplus_bin: input('sqlplus_bin'))
+  sql = oracledb_session(user: input('user'), password: input('password'), host: input('host'), port: input('port'), service: input('service'), sqlplus_bin: input('sqlplus_bin'))
 
   describe sql.query('select count(*) from V$LOG;').column('count(*)') do
     it { should cmp >= 2 }

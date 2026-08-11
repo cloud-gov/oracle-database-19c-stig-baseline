@@ -87,7 +87,7 @@ If any owners are returned other than those Oracle provides, ensure those owners
   tag 'check'
   tag 'fix'
 
-  sql = oracledb_session(user: input('user'), password: input('password'), host: input('host'), service: input('service'), sqlplus_bin: input('sqlplus_bin'))
+  sql = oracledb_session(user: input('user'), password: input('password'), host: input('host'), port: input('port'), service: input('service'), sqlplus_bin: input('sqlplus_bin'))
 
   dba_users = sql.query("select library_name,owner,  '' grantee, '' privilege
   from dba_libraries where file_spec is not null

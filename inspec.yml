@@ -24,6 +24,11 @@ inputs:
     value: ''
     sensitive: true
 
+  - name: port
+    description: 'port Oracle DB'
+    type: Numeric
+    value: 2484
+
   - name: service
     description: 'service name Oracle DB'
     value: ''

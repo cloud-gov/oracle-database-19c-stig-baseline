@@ -62,7 +62,7 @@ Where a password lifetime longer than 60 is needed, document the reasons and obt
   tag 'check'
   tag 'fix'
 
-  sql = oracledb_session(user: input('user'), password: input('password'), host: input('host'), service: input('service'), sqlplus_bin: input('sqlplus_bin'))
+  sql = oracledb_session(user: input('user'), password: input('password'), host: input('host'), port: input('port'), service: input('service'), sqlplus_bin: input('sqlplus_bin'))
 
   get_effective_life_time = sql.query("SELECT p1.profile,
   CASE p1.limit WHEN 'UNLIMITED' THEN 'UNLIMITED' ELSE

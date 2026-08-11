@@ -96,7 +96,7 @@ The database is now in archive log mode, and transactions are either being recor
   tag 'check'
   tag 'fix'
 
-  sql = oracledb_session(user: input('user'), password: input('password'), host: input('host'), service: input('service'), sqlplus_bin: input('sqlplus_bin'))
+  sql = oracledb_session(user: input('user'), password: input('password'), host: input('host'), port: input('port'), service: input('service'), sqlplus_bin: input('sqlplus_bin'))
 
   log_mode = sql.query('select log_mode from v$database;').column('log_mode')
 

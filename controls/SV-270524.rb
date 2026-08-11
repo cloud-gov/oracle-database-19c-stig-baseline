@@ -60,7 +60,7 @@ Restart the database for the change to take effect."
   tag 'check'
   tag 'fix'
 
-  sql = oracledb_session(user: input('user'), password: input('password'), host: input('host'), service: input('service'), sqlplus_bin: input('sqlplus_bin'))
+  sql = oracledb_session(user: input('user'), password: input('password'), host: input('host'), port: input('port'), service: input('service'), sqlplus_bin: input('sqlplus_bin'))
 
   parameter = sql.query("select value from v$parameter where name = 'remote_os_roles';").column('value')
 
