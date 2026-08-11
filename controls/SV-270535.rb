@@ -59,7 +59,7 @@ Ensure the file is directed to a writable location.
   tag 'check'
   tag 'fix'
 
-  sql = oracledb_session(user: input('user'), password: input('password'), host: input('host'), port: input('port'), service: input('service'), sqlplus_bin: input('sqlplus_bin'))
+  sql = oracledb_session(user: input('user'), password: input('password'), host: input('host'), service: input('service'), sqlplus_bin: input('sqlplus_bin'))
 
   parameter = sql.query("select value from v$parameter where name = '_trace_files_public';").column('value')
 

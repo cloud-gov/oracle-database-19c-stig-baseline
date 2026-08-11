@@ -49,7 +49,7 @@ ALTER PROFILE <profile_name> LIMIT SESSIONS_PER_USER <integer>;'
   tag 'check'
   tag 'fix'
 
-  sql = oracledb_session(user: input('user'), password: input('password'), host: input('host'), port: input('port'), service: input('service'), sqlplus_bin: input('sqlplus_bin'))
+  sql = oracledb_session(user: input('user'), password: input('password'), host: input('host'), service: input('service'), sqlplus_bin: input('sqlplus_bin'))
 
   concurrent_sessions = sql.query("SELECT limit FROM SYS.DBA_PROFILES WHERE RESOURCE_NAME = 'SESSIONS_PER_USER';").column('limit')
 

@@ -96,7 +96,7 @@ If this level of auditing does not meet site-specific requirements, consider dep
   tag 'check'
   tag 'fix'
 
-  sql = oracledb_session(user: input('user'), password: input('password'), host: input('host'), port: input('port'), service: input('service'), sqlplus_bin: input('sqlplus_bin'))
+  sql = oracledb_session(user: input('user'), password: input('password'), host: input('host'), service: input('service'), sqlplus_bin: input('sqlplus_bin'))
 
   standard_auditing_used = input('standard_auditing_used')
   unified_auditing_used = input('unified_auditing_used')

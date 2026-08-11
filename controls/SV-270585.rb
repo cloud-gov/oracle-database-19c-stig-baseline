@@ -51,7 +51,7 @@ $ opatch apply'
   tag 'check'
   tag 'fix'
 
-  sql = oracledb_session(user: input('user'), password: input('password'), host: input('host'), port: input('port'), service: input('service'), sqlplus_bin: input('sqlplus_bin'))
+  sql = oracledb_session(user: input('user'), password: input('password'), host: input('host'), service: input('service'), sqlplus_bin: input('sqlplus_bin'))
 
   patches = sql.query('SELECT patch_id from dba_registry_sqlpatch;').column('patch_id')
 

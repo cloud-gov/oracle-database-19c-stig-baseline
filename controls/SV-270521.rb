@@ -50,7 +50,7 @@ The database administrator (DBA) should be able to relate the significance of th
   tag 'check'
   tag 'fix'
 
-  sql = oracledb_session(user: input('user'), password: input('password'), host: input('host'), port: input('port'), service: input('service'), sqlplus_bin: input('sqlplus_bin'))
+  sql = oracledb_session(user: input('user'), password: input('password'), host: input('host'), service: input('service'), sqlplus_bin: input('sqlplus_bin'))
 
   version = sql.query('select version from v$instance;').column('version')
   db_instance_name = sql.query('select instance_name from v$instance;').column('instance_name')

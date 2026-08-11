@@ -65,7 +65,7 @@ If any of the users listed above is returned, it means that there are demo progr
   tag 'check'
   tag 'fix'
 
-  sql = oracledb_session(user: input('user'), password: input('password'), host: input('host'), port: input('port'), service: input('service'), sqlplus_bin: input('sqlplus_bin'))
+  sql = oracledb_session(user: input('user'), password: input('password'), host: input('host'), service: input('service'), sqlplus_bin: input('sqlplus_bin'))
 
   sample_schema_user_accounts = sql.query("select distinct(username) from dba_users where username in
   ('BI','HR','OE','PM','IX','SH','SCOTT');").column('username')

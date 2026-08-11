@@ -38,7 +38,7 @@ control 'SV-270532' do
   tag 'check'
   tag 'fix'
 
-  sql = oracledb_session(user: input('user'), password: input('password'), host: input('host'), port: input('port'), service: input('service'), sqlplus_bin: input('sqlplus_bin'))
+  sql = oracledb_session(user: input('user'), password: input('password'), host: input('host'), service: input('service'), sqlplus_bin: input('sqlplus_bin'))
 
   describe sql.query("select granted_role from dba_role_privs where grantee = 'PUBLIC';").row(0).column('granted_role') do
     its('value') { should be_empty }

@@ -58,7 +58,7 @@ If any account other than the Oracle process and software owner accounts, admini
   tag 'check'
   tag 'fix'
 
-  sql = oracledb_session(user: input('user'), password: input('password'), host: input('host'), port: input('port'), service: input('service'), sqlplus_bin: input('sqlplus_bin'))
+  sql = oracledb_session(user: input('user'), password: input('password'), host: input('host'), service: input('service'), sqlplus_bin: input('sqlplus_bin'))
 
   log_archive_dest = sql.query("select value from v$parameter where name = 'log_archive_dest';").column('value')
 

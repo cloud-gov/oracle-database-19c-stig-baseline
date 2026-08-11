@@ -51,7 +51,7 @@ Reassign ownership of authorized objects to authorized object owner accounts.'
   tag 'check'
   tag 'fix'
 
-  sql = oracledb_session(user: input('user'), password: input('password'), host: input('host'), port: input('port'), service: input('service'), sqlplus_bin: input('sqlplus_bin'))
+  sql = oracledb_session(user: input('user'), password: input('password'), host: input('host'), service: input('service'), sqlplus_bin: input('sqlplus_bin'))
 
   dba_object_owners = sql.query('select DISTINCT owner from dba_objects;').column('owner').uniq
   if dba_object_owners .empty?

@@ -72,7 +72,7 @@ In any instance or container, if the PARAMETER_VALUE is not TRUE, that is a find
   tag 'check'
   tag 'fix'
 
-  sql = oracledb_session(user: input('user'), password: input('password'), host: input('host'), port: input('port'), service: input('service'), sqlplus_bin: input('sqlplus_bin'))
+  sql = oracledb_session(user: input('user'), password: input('password'), host: input('host'), service: input('service'), sqlplus_bin: input('sqlplus_bin'))
 
   parameter = sql.query("select value from v$parameter where name = 'sql92_security';").column('value')
 
