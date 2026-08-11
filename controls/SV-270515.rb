@@ -41,7 +41,7 @@ If any accounts are returned that are not required and authorized to have access
   tag 'check'
   tag 'fix'
 
-  sql = oracledb_session(user: input('user'), password: input('password'), host: input('host'), service: input('service'), sqlplus_bin: input('sqlplus_bin'))
+  sql = oracledb_session(user: input('user'), password: input('password'), host: input('host'), port: input('port'), service: input('service'), sqlplus_bin: input('sqlplus_bin'))
 
   dba_users = sql.query("select * from dba_role_privs where granted_role = 'DBA';").column('grantee').uniq
   if dba_users.empty?

@@ -65,7 +65,7 @@ FIPS documentation can be downloaded from https://csrc.nist.gov/publications/fip
   tag 'check'
   tag 'fix'
 
-  sql = oracledb_session(user: input('user'), password: input('password'), host: input('host'), service: input('service'), sqlplus_bin: input('sqlplus_bin'))
+  sql = oracledb_session(user: input('user'), password: input('password'), host: input('host'), port: input('port'), service: input('service'), sqlplus_bin: input('sqlplus_bin'))
 
   version = sql.query('select version from v$instance;').column('version')
 

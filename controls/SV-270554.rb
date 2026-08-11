@@ -65,7 +65,7 @@ Refer to My Oracle Support Document 948061.1 for more on the chopt command.'
   tag 'check'
   tag 'fix'
 
-  sql = oracledb_session(user: input('user'), password: input('password'), host: input('host'), service: input('service'), sqlplus_bin: input('sqlplus_bin'))
+  sql = oracledb_session(user: input('user'), password: input('password'), host: input('host'), port: input('port'), service: input('service'), sqlplus_bin: input('sqlplus_bin'))
 
   list_of_installed_components_integrated_into_dbms = sql.query("SELECT parameter, value
   from v$option
