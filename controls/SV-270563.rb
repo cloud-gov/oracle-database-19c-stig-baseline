@@ -64,15 +64,16 @@ Where a password lifetime longer than 60 is needed, document the reasons and obt
 
   sql = oracledb_session(user: input('user'), password: input('password'), host: input('host'), port: input('port'), service: input('service'), sqlplus_bin: input('sqlplus_bin'))
 
-  get_effective_life_time = sql.query("SELECT p1.profile,
-  CASE p1.limit WHEN 'UNLIMITED' THEN 'UNLIMITED' ELSE
-  CASE p2.limit WHEN 'UNLIMITED' THEN 'UNLIMITED' ELSE
-  CASE p3.limit WHEN 'UNLIMITED' THEN 'UNLIMITED' ELSE
-  CASE p4.limit WHEN 'UNLIMITED' THEN 'UNLIMITED' ELSE
+  # Per the check text, a profile is a finding when its EFFECTIVE_LIFE_TIME
+  # (PASSWORD_LIFE_TIME + PASSWORD_GRACE_TIME, resolving DEFAULT to the DEFAULT
+  # profile's values) is GREATER THAN 60, or when either PASSWORD_LIFE_TIME or
+  # PASSWORD_GRACE_TIME is UNLIMITED. The query mirrors the STIG's DECODE logic:
+  # UNLIMITED in either component yields 'UNLIMITED'; otherwise a numeric sum.
+  effective_life_times = sql.query("SELECT p1.profile,
+  CASE DECODE(p1.limit, 'DEFAULT', p3.limit, p1.limit) WHEN 'UNLIMITED' THEN 'UNLIMITED' ELSE
+  CASE DECODE(p2.limit, 'DEFAULT', p4.limit, p2.limit) WHEN 'UNLIMITED' THEN 'UNLIMITED' ELSE
   TO_CHAR(DECODE(p1.limit, 'DEFAULT', p3.limit, p1.limit) + DECODE(p2.limit,
   'DEFAULT', p4.limit, p2.limit))
-  END
-  END
   END
   END effective_life_time
   FROM dba_profiles p1, dba_profiles p2, dba_profiles p3, dba_profiles p4
@@ -85,14 +86,18 @@ Where a password lifetime longer than 60 is needed, document the reasons and obt
   AND p4.resource_name='PASSWORD_GRACE_TIME' -- from DEFAULT profile
   order by 1;").column('effective_life_time')
 
-  get_effective_life_time.each do |effective_life_time|
-
-    describe 'The oracle database account effective life time limit' do
-      subject { effective_life_time }
-      it { should cmp >= 60 }
+  if effective_life_times.empty?
+    describe 'The oracle database password life time profiles' do
+      subject { effective_life_times }
+      it { should_not be_empty }
     end
-  end
-  describe get_effective_life_time do
-    it { should_not be_empty }
+  else
+    effective_life_times.each do |effective_life_time|
+      describe "The oracle database account effective life time limit: #{effective_life_time}" do
+        subject { effective_life_time }
+        it { should_not cmp 'UNLIMITED' }
+        it { should cmp <= 60 }
+      end
+    end
   end
 end
