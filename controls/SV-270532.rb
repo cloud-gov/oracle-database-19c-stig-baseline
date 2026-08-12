@@ -40,7 +40,12 @@ control 'SV-270532' do
 
   sql = oracledb_session(user: input('user'), password: input('password'), host: input('host'), port: input('port'), service: input('service'), sqlplus_bin: input('sqlplus_bin'))
 
-  describe sql.query("select granted_role from dba_role_privs where grantee = 'PUBLIC';").row(0).column('granted_role') do
-    its('value') { should be_empty }
+  # A finding is any role granted to PUBLIC; the control is met only when no such
+  # grants exist.
+  roles_granted_to_public = sql.query("select granted_role from dba_role_privs where grantee = 'PUBLIC';").column('granted_role')
+
+  describe 'Roles granted to PUBLIC' do
+    subject { roles_granted_to_public }
+    it { should be_empty }
   end
 end

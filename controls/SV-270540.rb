@@ -46,10 +46,21 @@ https://docs.oracle.com/en/database/oracle/oracle-database/19/dbseg/configuring-
 
   sql = oracledb_session(user: input('user'), password: input('password'), host: input('host'), port: input('port'), service: input('service'), sqlplus_bin: input('sqlplus_bin'))
 
-  parameter = sql.query("select value from v$parameter where name = 'audit_sys_operations';").column('value')
+  # The control is met under either audit mode:
+  #   Unified/mixed: >= 1 enabled unified policy for entity SYS
+  #   Standard:      audit_sys_operations = TRUE
+  unified_sys_policy_count = sql.query("select count(*) as policy_count from audit_unified_enabled_policies where entity_name = 'SYS';").column('policy_count').first.to_i
+  audit_sys_operations = sql.query("select value from v$parameter where name = 'audit_sys_operations';").column('value')
 
-  describe 'The oracle database AUDIT_SYS_OPERATIONS parameter' do
-    subject { parameter }
-    it { should_not cmp 'FALSE' }
+  describe.one do
+    describe 'Unified audit policies enabled for the SYS entity' do
+      subject { unified_sys_policy_count }
+      it { should be >= 1 }
+    end
+
+    describe 'The oracle database AUDIT_SYS_OPERATIONS parameter (standard auditing)' do
+      subject { audit_sys_operations }
+      it { should cmp 'TRUE' }
+    end
   end
 end

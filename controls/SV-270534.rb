@@ -60,24 +60,29 @@ If any account other than the Oracle process and software owner accounts, admini
 
   sql = oracledb_session(user: input('user'), password: input('password'), host: input('host'), port: input('port'), service: input('service'), sqlplus_bin: input('sqlplus_bin'))
 
-  log_archive_dest = sql.query("select value from v$parameter where name = 'log_archive_dest';").column('value')
+  # Per the check text: if LOG_MODE is NOARCHIVELOG this is not a finding.
+  # Otherwise it is a finding only when none of log_archive_dest,
+  # log_archive_dest_[1-10], or db_recovery_file_dest has a value. Model this as
+  # "at least one destination is configured".
+  log_mode = sql.query('select log_mode from v$database;').column('log_mode').first.to_s
 
-  describe 'The oracle database log_archive_dest parameter' do
-    subject { log_archive_dest }
-    it { should_not cmp [' '] }
-  end
+  # Collect every configured (non-blank) archive/recovery destination.
+  archive_dests = []
+  archive_dests += sql.query("select value from v$parameter where name = 'log_archive_dest';").column('value')
+  archive_dests += sql.query("select value from v$parameter where name LIKE 'log_archive_dest_%';").column('value')
+  archive_dests += sql.query("select value from v$parameter where name = 'db_recovery_file_dest';").column('value')
+  configured_dests = archive_dests.map { |d| d.to_s.strip }.reject(&:empty?)
 
-  parameter = sql.query("select DISTINCT value from v$parameter where name LIKE 'log_archive_dest_%';").column('value')
-
-  describe 'The oracle database value for log_archive_dest parameter' do
-    subject { parameter }
-    it { should_not cmp [' '] }
-  end
-
-  db_recovery_file_dest = sql.query("select value from v$parameter where name = 'db_recovery_file_dest';").column('value').uniq
-
-  describe 'The oracle database db_recovery_file_dest parameter' do
-    subject { db_recovery_file_dest }
-    it { should_not cmp [' '] }
+  if log_mode.casecmp('NOARCHIVELOG').zero?
+    describe "Archive logging (LOG_MODE=#{log_mode})" do
+      it 'is not a finding when the database is in NOARCHIVELOG mode' do
+        expect(log_mode.casecmp('NOARCHIVELOG').zero?).to be true
+      end
+    end
+  else
+    describe 'Configured Oracle archive/recovery destinations' do
+      subject { configured_dests }
+      it { should_not be_empty }
+    end
   end
 end

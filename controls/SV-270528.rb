@@ -46,7 +46,12 @@ If any records are returned, this is a finding."
 
   sql = oracledb_session(user: input('user'), password: input('password'), host: input('host'), port: input('port'), service: input('service'), sqlplus_bin: input('sqlplus_bin'))
 
-  describe sql.query("select privilege from dba_sys_privs where grantee = 'PUBLIC';").row(0).column('privilege') do
-    its('value') { should be_empty }
+  # A finding is any system privilege granted to PUBLIC; the control is met only
+  # when no such grants exist.
+  system_privs_granted_to_public = sql.query("select privilege from dba_sys_privs where grantee = 'PUBLIC';").column('privilege')
+
+  describe 'System privileges granted to PUBLIC' do
+    subject { system_privs_granted_to_public }
+    it { should be_empty }
   end
 end

@@ -71,7 +71,21 @@ If the value of the count returned is less than 3 and a RAID storage device is n
 
   sql = oracledb_session(user: input('user'), password: input('password'), host: input('host'), port: input('port'), service: input('service'), sqlplus_bin: input('sqlplus_bin'))
 
-  describe sql.query('select count(*) from V$LOG;').column('count(*)') do
-    it { should cmp >= 2 }
+  # STIG requires a minimum of three redo log groups, and each group must have a
+  # minimum of two members.
+  redo_log_group_count = sql.query('select count(*) as group_count from V$LOG;').column('group_count').first.to_i
+
+  describe 'The number of Oracle redo log groups' do
+    subject { redo_log_group_count }
+    it { should be >= 3 }
+  end
+
+  # Each group must have at least two members; flag any group (group#) with
+  # fewer than two.
+  groups_with_too_few_members = sql.query('select group# as group_id from V$LOG where members < 2;').column('group_id')
+
+  describe 'Oracle redo log groups with fewer than two members' do
+    subject { groups_with_too_few_members }
+    it { should be_empty }
   end
 end
