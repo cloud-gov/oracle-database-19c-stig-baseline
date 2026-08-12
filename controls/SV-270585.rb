@@ -53,10 +53,12 @@ $ opatch apply'
 
   sql = oracledb_session(user: input('user'), password: input('password'), host: input('host'), port: input('port'), service: input('service'), sqlplus_bin: input('sqlplus_bin'))
 
+  # The control requires that patches have actually been applied, i.e.
+  # dba_registry_sqlpatch returns at least one row.
   patches = sql.query('SELECT patch_id from dba_registry_sqlpatch;').column('patch_id')
 
-  describe 'The oracle database installed patches' do
+  describe 'The oracle database installed patches (dba_registry_sqlpatch)' do
     subject { patches }
-    it { should_not cmp nil }
+    it { should_not be_empty }
   end
 end
