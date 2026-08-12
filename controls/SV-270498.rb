@@ -38,4 +38,12 @@ https://docs.oracle.com/en/database/oracle/oracle-database/19/olsag/label-securi
   tag 'documentable'
   tag cci: ['CCI-002262', 'CCI-002263', 'CCI-002264']
   tag nist: ['AC-16 a', 'AC-16 a', 'AC-16 a']
+
+  # No automated assertion is defined for this control: it requires manual review
+  # of system documentation / organizational policy (or is not tenant-verifiable
+  # on managed RDS). Emit an explicit skip so the control is reported as "not
+  # reviewed" rather than silently passing with zero tests.
+  describe "SV-270498: manual review required (no automated test defined)" do
+    skip "SV-270498 requires manual review; no automated assertion is defined."
+  end
 end

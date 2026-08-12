@@ -26,4 +26,12 @@ Create a job to lock accounts under this profile that are more than 72 hours old
   tag 'documentable'
   tag cci: ['CCI-000366']
   tag nist: ['CM-6 b']
+
+  # No automated assertion is defined for this control: it requires manual review
+  # of system documentation / organizational policy (or is not tenant-verifiable
+  # on managed RDS). Emit an explicit skip so the control is reported as "not
+  # reviewed" rather than silently passing with zero tests.
+  describe "SV-270547: manual review required (no automated test defined)" do
+    skip "SV-270547 requires manual review; no automated assertion is defined."
+  end
 end

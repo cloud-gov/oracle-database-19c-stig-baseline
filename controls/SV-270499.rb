@@ -32,4 +32,12 @@ Utilize an Oracle feature/product, an OS feature, a third-party product, or cust
   tag 'documentable'
   tag cci: ['CCI-000015']
   tag nist: ['AC-2 (1)']
+
+  # No automated assertion is defined for this control: it requires manual review
+  # of system documentation / organizational policy (or is not tenant-verifiable
+  # on managed RDS). Emit an explicit skip so the control is reported as "not
+  # reviewed" rather than silently passing with zero tests.
+  describe "SV-270499: manual review required (no automated test defined)" do
+    skip "SV-270499 requires manual review; no automated assertion is defined."
+  end
 end

@@ -166,4 +166,12 @@ AUDIT POLICY <policy_name> BY <user> WHENEVER NOT SUCCESSFUL;"
   tag 'documentable'
   tag cci: ['CCI-000172']
   tag nist: ['AU-12 c']
+
+  # This control embeds a SQL check (see the "check" text above) and is a
+  # candidate for automated assessment via oracledb_session, but that assertion
+  # has NOT yet been implemented/validated. Mark it skipped PENDING that review +
+  # assessment work rather than leaving it as a silent zero-test pass.
+  describe "SV-270504: automated assessment pending (SQL check not yet implemented)" do
+    skip "SV-270504 is SQL-assessable but not yet automated; skipped pending review and implementation."
+  end
 end

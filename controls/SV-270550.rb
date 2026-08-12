@@ -36,4 +36,12 @@ Note: It is necessary to create a customized replacement for the password valida
   tag 'documentable'
   tag cci: ['CCI-000366']
   tag nist: ['CM-6 b']
+
+  # This control embeds a SQL check (see the "check" text above) and is a
+  # candidate for automated assessment via oracledb_session, but that assertion
+  # has NOT yet been implemented/validated. Mark it skipped PENDING that review +
+  # assessment work rather than leaving it as a silent zero-test pass.
+  describe "SV-270550: automated assessment pending (SQL check not yet implemented)" do
+    skip "SV-270550 is SQL-assessable but not yet automated; skipped pending review and implementation."
+  end
 end

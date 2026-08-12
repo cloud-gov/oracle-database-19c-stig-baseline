@@ -28,4 +28,12 @@ Oracle Audit Vault consumes audit data from databases, which may be automaticall
   tag 'documentable'
   tag cci: ['CCI-001851']
   tag nist: ['AU-4 (1)']
+
+  # No automated assertion is defined for this control: it requires manual review
+  # of system documentation / organizational policy (or is not tenant-verifiable
+  # on managed RDS). Emit an explicit skip so the control is reported as "not
+  # reviewed" rather than silently passing with zero tests.
+  describe "SV-270507: manual review required (no automated test defined)" do
+    skip "SV-270507 requires manual review; no automated assertion is defined."
+  end
 end

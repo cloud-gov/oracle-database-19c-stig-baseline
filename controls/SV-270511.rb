@@ -27,4 +27,12 @@ If appropriate permissions and access controls are not applied to prevent unauth
   tag 'documentable'
   tag cci: ['CCI-001493', 'CCI-001494', 'CCI-001495']
   tag nist: ['AU-9 a', 'AU-9', 'AU-9']
+
+  # No automated assertion is defined for this control: it requires manual review
+  # of system documentation / organizational policy (or is not tenant-verifiable
+  # on managed RDS). Emit an explicit skip so the control is reported as "not
+  # reviewed" rather than silently passing with zero tests.
+  describe "SV-270511: manual review required (no automated test defined)" do
+    skip "SV-270511 requires manual review; no automated assertion is defined."
+  end
 end

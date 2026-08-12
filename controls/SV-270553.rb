@@ -49,4 +49,12 @@ To configure a PDB to only use specific components:
   tag 'documentable'
   tag cci: ['CCI-000381']
   tag nist: ['CM-7 a']
+
+  # This control embeds a SQL check (see the "check" text above) and is a
+  # candidate for automated assessment via oracledb_session, but that assertion
+  # has NOT yet been implemented/validated. Mark it skipped PENDING that review +
+  # assessment work rather than leaving it as a silent zero-test pass.
+  describe "SV-270553: automated assessment pending (SQL check not yet implemented)" do
+    skip "SV-270553 is SQL-assessable but not yet automated; skipped pending review and implementation."
+  end
 end

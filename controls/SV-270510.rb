@@ -110,4 +110,12 @@ Authorize and document user access requirements to the directory outside of the 
   tag 'documentable'
   tag cci: ['CCI-000162', 'CCI-000163', 'CCI-000164']
   tag nist: ['AU-9 a', 'AU-9 a', 'AU-9 a']
+
+  # This control embeds a SQL check (see the "check" text above) and is a
+  # candidate for automated assessment via oracledb_session, but that assertion
+  # has NOT yet been implemented/validated. Mark it skipped PENDING that review +
+  # assessment work rather than leaving it as a silent zero-test pass.
+  describe "SV-270510: automated assessment pending (SQL check not yet implemented)" do
+    skip "SV-270510 is SQL-assessable but not yet automated; skipped pending review and implementation."
+  end
 end

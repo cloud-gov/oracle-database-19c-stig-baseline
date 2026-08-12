@@ -26,4 +26,12 @@ Recommend establishing a dedicated DBMS host for production DBMS installations. 
   tag 'documentable'
   tag cci: ['CCI-000366']
   tag nist: ['CM-6 b']
+
+  # No automated assertion is defined for this control: it requires manual review
+  # of system documentation / organizational policy (or is not tenant-verifiable
+  # on managed RDS). Emit an explicit skip so the control is reported as "not
+  # reviewed" rather than silently passing with zero tests.
+  describe "SV-270536: manual review required (no automated test defined)" do
+    skip "SV-270536 requires manual review; no automated assertion is defined."
+  end
 end

@@ -31,4 +31,12 @@ Upgrade unsupported DBMS or unsupported components to a supported version of the
   tag 'documentable'
   tag cci: ['CCI-003376']
   tag nist: ['SA-22 a']
+
+  # This control embeds a SQL check (see the "check" text above) and is a
+  # candidate for automated assessment via oracledb_session, but that assertion
+  # has NOT yet been implemented/validated. Mark it skipped PENDING that review +
+  # assessment work rather than leaving it as a silent zero-test pass.
+  describe "SV-270513: automated assessment pending (SQL check not yet implemented)" do
+    skip "SV-270513 is SQL-assessable but not yet automated; skipped pending review and implementation."
+  end
 end
