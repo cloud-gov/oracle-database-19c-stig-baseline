@@ -68,18 +68,23 @@ Then, disable all accounts that have not logged in within 35 days."
 
   sql = oracledb_session(user: input('user'), password: input('password'), host: input('host'), port: input('port'), service: input('service'), sqlplus_bin: input('sqlplus_bin'))
 
+  # Per the check text, the control governs INACTIVE_ACCOUNT_TIME (days a user
+  # account may remain OPEN since last login before it is LOCKED). A profile is
+  # a finding when INACTIVE_ACCOUNT_TIME is UNLIMITED (the default) or greater
+  # than the org-defined inactivity age (35 days).
   query = %{
     SELECT PROFILE, RESOURCE_NAME, LIMIT FROM DBA_PROFILES WHERE PROFILE =
-  '%<profile>s' AND RESOURCE_NAME = 'PASSWORD_LIFE_TIME'
+  '%<profile>s' AND RESOURCE_NAME = 'INACTIVE_ACCOUNT_TIME'
   }
 
   user_profiles = sql.query('SELECT profile FROM dba_users;').column('profile').uniq
 
   user_profiles.each do |profile|
-    password_life_time = sql.query(format(query, profile: profile)).column('limit')
+    inactive_account_time = sql.query(format(query, profile: profile)).column('limit')
 
-    describe "The oracle database account password life time for profile: #{profile}" do
-      subject { password_life_time }
+    describe "The oracle database account inactivity time for profile: #{profile}" do
+      subject { inactive_account_time }
+      it { should_not cmp 'UNLIMITED' }
       it { should cmp <= input('account_inactivity_age') }
     end
   end
