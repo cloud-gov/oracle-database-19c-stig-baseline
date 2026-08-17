@@ -55,6 +55,10 @@ ALTER PROFILE <profile_name> LIMIT SESSIONS_PER_USER <integer>;'
 
   describe 'The oracle database number of concurrent sessions allowed' do
     subject { concurrent_sessions }
+    # Guard against a vacuous pass: an empty result (unreachable DB, no matching
+    # profiles, or a parser miss) makes should_not include pass trivially, which
+    # would hide a real finding. Assert we actually got profile limits first.
+    it { should_not be_empty }
     it { should_not include 'UNLIMITED' }
     it { should_not include 'DEFAULT' }
   end
