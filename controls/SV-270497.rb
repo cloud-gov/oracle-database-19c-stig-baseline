@@ -41,11 +41,26 @@ SCOPE = BOTH;"
   tag cci: ['CCI-002361', 'CCI-002363']
   tag nist: ['AC-12', 'AC-12 (1)']
 
-  # This control embeds a SQL check (see the "check" text above) and is a
-  # candidate for automated assessment via oracledb_session, but that assertion
-  # has NOT yet been implemented/validated. Mark it skipped PENDING that review +
-  # assessment work rather than leaving it as a silent zero-test pass.
-  describe "SV-270497: automated assessment pending (SQL check not yet implemented)" do
-    skip "SV-270497 is SQL-assessable but not yet automated; skipped pending review and implementation."
+  # SQL assessment per the DISA check text: read max_idle_time from GV$PARAMETER
+  # and fail when it is 0 (session idle-termination disabled) or does not meet the
+  # organization-defined minimum. The org-defined value is supplied as an input
+  # (max_idle_time_minutes); when none is documented the STIG says assume 15.
+  # See the "check" text above.
+  max_idle_time_minutes = input('max_idle_time_minutes', value: 15)
+
+  sql = oracledb_session(user: input('user'), password: input('password'), host: input('host'), port: input('port'), service: input('service'), sqlplus_bin: input('sqlplus_bin'))
+
+  # GV$PARAMETER covers all RAC instances; each row is one instance's value.
+  max_idle_times = sql.query("SELECT gp.value FROM sys.gv_$parameter gp WHERE gp.name = 'max_idle_time';").column('value')
+
+  describe 'The Oracle database max_idle_time (minutes) for every instance' do
+    subject { max_idle_times.map(&:to_i) }
+    it { should_not be_empty }
+    it 'is greater than 0 (idle-session termination is enabled)' do
+      expect(max_idle_times.map(&:to_i)).to all(be > 0)
+    end
+    it "meets the organization-defined minimum (#{max_idle_time_minutes} minutes)" do
+      expect(max_idle_times.map(&:to_i)).to all(be >= max_idle_time_minutes.to_i)
+    end
   end
 end
