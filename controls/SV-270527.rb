@@ -64,18 +64,29 @@ Document authorized privilege assignments with the WITH ADMIN OPTION in the syst
   sql = oracledb_session(user: input('user'), password: input('password'), host: input('host'), port: input('port'), service: input('service'), sqlplus_bin: input('sqlplus_bin'))
 
   dba_users = sql.query("select grantee from dba_sys_privs
-  where admin_option = 'YES' and grantee not in (select grantee from dba_role_privs where granted_role = 'DBA');").column('grantee').uniq
-  if dba_users.empty?
-    impact 0.0
-    describe 'There are no oracle DBA users, control N/A' do
-      skip 'There are no oracle DBA users, control N/A'
-    end
-  else
-    dba_users.each do |user|
-      describe "oracle DBA users: #{user}" do
-        subject { user }
-        it { should be_in input('allowed_dbadmin_users') }
-      end
-    end
+  where admin_option = 'YES'
+  and grantee not in (
+    'XDB', 'SYSTEM', 'SYS', 'LBACSYS', 'DVSYS', 'DVF', 'SYSMAN_RO',
+    'SYSMAN_BIPLATFORM', 'SYSMAN_MDS', 'SYSMAN_OPSS', 'SYSMAN_STB', 'DBSNMP',
+    'SYSMAN', 'APEX_040200', 'WMSYS', 'SYSDG', 'SYSBACKUP',
+    'SPATIAL_WFS_ADMIN_USR', 'SPATIAL_CSW_ADMIN_US', 'GSMCATUSER', 'OLAPSYS',
+    'SI_INFORMTN_SCHEMA', 'OUTLN', 'ORDSYS', 'ORDDATA', 'OJVMSYS',
+    'ORACLE_OCM', 'MDSYS', 'ORDPLUGINS', 'GSMADMIN_INTERNAL', 'MDDATA',
+    'FLOWS_FILES', 'DIP', 'CTXSYS', 'AUDSYS', 'APPQOSSYS', 'APEX_PUBLIC_USER',
+    'ANONYMOUS', 'SPATIAL_CSW_ADMIN_USR', 'SYSKM', 'SYSMAN_TYPES', 'MGMT_VIEW',
+    'EUS_ENGINE_USER', 'EXFSYS', 'SYSMAN_APM',
+    'FLOWS_040100', 'OWBSYS', 'WKPROXY', 'WK_SYS', 'WK_TEST', 'XS$NULL',
+    'AQ_ADMINISTRATOR_ROLE', 'SCHEDULER_ADMIN', 'DBA'
+  )
+  and grantee not in (select grantee from dba_role_privs where granted_role = 'DBA');").column('grantee').uniq
+  # DISA check: exclude the Oracle-supplied predefined administrative accounts and
+  # roles (the STIG's '<list of nonapplicable accounts>'), then any REMAINING
+  # grantee holding a system privilege WITH ADMIN OPTION must be an org-authorized
+  # admin (allowed_dbadmin_users) or it is a finding. An empty result means the
+  # requirement is fully satisfied — this is a PASS (not N/A); `all` is vacuously
+  # true on an empty array.
+  describe 'Accounts holding a system privilege WITH ADMIN OPTION' do
+    subject { dba_users }
+    it { should all(be_in input('allowed_dbadmin_users')) }
   end
 end
