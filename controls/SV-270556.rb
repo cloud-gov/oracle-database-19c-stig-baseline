@@ -91,6 +91,7 @@ If any owners are returned other than those Oracle provides, ensure those owners
 
   dba_users = sql.query("select library_name,owner,  '' grantee, '' privilege
   from dba_libraries where file_spec is not null
+  and owner not in ('SYS', 'ORDSYS')
   minus
   (
   select library_name,o.name owner,  '' grantee, '' privilege
@@ -123,10 +124,12 @@ If any owners are returned other than those Oracle provides, ensure those owners
      and ge.user#=oa.grantee#
      and tpm.privilege=oa.privilege#
      and l.file_spec is not null;").column('owner').uniq
-  # An empty result means no account has EXECUTE on an external-library
-  # definition — the requirement is fully satisfied, so this is a PASS (not
-  # N/A). `all` is vacuously true on an empty array; any grantee outside the
-  # org-defined allowlist is still a finding.
+  # DISA check: the STIG query excludes the Oracle-provided library owners
+  # ('SYS', 'ORDSYS') on the first branch; any REMAINING owner/grantee of an
+  # external-library definition must be an org-authorized admin
+  # (allowed_dbadmin_users) or it is a finding. An empty result means the
+  # requirement is fully satisfied — this is a PASS (not N/A); `all` is vacuously
+  # true on an empty array.
   describe 'Accounts with EXECUTE on external-library definitions' do
     subject { dba_users }
     it { should all(be_in input('allowed_dbadmin_users')) }

@@ -60,14 +60,28 @@ If any are not authorized application administration roles, this is a finding."
   where default_role='YES'
   and granted_role in
   (select grantee from dba_sys_privs where upper(privilege) like '%USER%')
+  and grantee not in (
+    'XDB', 'SYSTEM', 'SYS', 'LBACSYS', 'DVSYS', 'DVF', 'SYSMAN_RO',
+    'SYSMAN_BIPLATFORM', 'SYSMAN_MDS', 'SYSMAN_OPSS', 'SYSMAN_STB', 'DBSNMP',
+    'SYSMAN', 'APEX_040200', 'WMSYS', 'SYSDG', 'SYSBACKUP',
+    'SPATIAL_WFS_ADMIN_USR', 'SPATIAL_CSW_ADMIN_US', 'GSMCATUSER', 'OLAPSYS',
+    'SI_INFORMTN_SCHEMA', 'OUTLN', 'ORDSYS', 'ORDDATA', 'OJVMSYS',
+    'ORACLE_OCM', 'MDSYS', 'ORDPLUGINS', 'GSMADMIN_INTERNAL', 'MDDATA',
+    'FLOWS_FILES', 'DIP', 'CTXSYS', 'AUDSYS', 'APPQOSSYS', 'APEX_PUBLIC_USER',
+    'ANONYMOUS', 'SPATIAL_CSW_ADMIN_USR', 'SYSKM', 'SYSMAN_TYPES', 'MGMT_VIEW',
+    'EUS_ENGINE_USER', 'EXFSYS', 'SYSMAN_APM',
+    'DBA', 'DATAPUMP_IMP_FULL_DATABASE', 'DATAPUMP_EXP_FULL_DATABASE'
+  )
   and grantee not in (select distinct owner from dba_tables)
   and grantee not in
   (select distinct username from dba_users where upper(account_status) like
    '%LOCKED%');").column('grantee').uniq
-  # An empty result means no account holds the DBA role by default — the
-  # requirement is fully satisfied, so this is a PASS (not N/A). `all` is
-  # vacuously true on an empty array; any grantee outside the org-defined
-  # allowlist is still a finding.
+  # DISA check: exclude the Oracle-supplied predefined accounts/roles (the STIG's
+  # '<list of nonapplicable accounts>'), then any REMAINING account holding an
+  # application-administration role by default must be an org-authorized admin
+  # (allowed_users_dba_role) or it is a finding. An empty result means the
+  # requirement is fully satisfied — this is a PASS (not N/A); `all` is vacuously
+  # true on an empty array.
   describe 'Accounts holding the DBA role by default' do
     subject { users_with_dba_role }
     it { should all(be_in input('allowed_users_dba_role')) }
