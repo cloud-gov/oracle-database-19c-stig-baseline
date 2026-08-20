@@ -54,11 +54,47 @@ The list of special accounts that are excluded from this requirement may not be 
   tag cci: ['CCI-001499']
   tag nist: ['CM-5 (6)']
 
-  # This control embeds a SQL check (see the "check" text above) and is a
-  # candidate for automated assessment via oracledb_session, but that assertion
-  # has NOT yet been implemented/validated. Mark it skipped PENDING that review +
-  # assessment work rather than leaving it as a silent zero-test pass.
-  describe "SV-270519: automated assessment pending (SQL check not yet implemented)" do
-    skip "SV-270519 is SQL-assessable but not yet automated; skipped pending review and implementation."
+  sql = oracledb_session(user: input('user'), password: input('password'), host: input('host'), port: input('port'), service: input('service'), sqlplus_bin: input('sqlplus_bin'))
+
+  # DISA check: administrative (system) privileges assigned DIRECTLY to a database
+  # account are a finding. Enumerate direct DBA_SYS_PRIVS grants, excluding (a) the
+  # Oracle special/maintenance accounts the STIG lists, (b) the non-administrative
+  # privileges the STIG excludes, and (c) site-authorized admin accounts supplied
+  # via the allowed_dbadmin_users input (the STIG explicitly expects the DBA to
+  # tailor the exclusion list to local circumstances).
+  admin_grantees = sql.query("SELECT grantee, privilege
+  FROM dba_sys_privs
+  WHERE grantee IN (
+    SELECT username FROM dba_users
+    WHERE username NOT IN (
+      'XDB', 'SYSTEM', 'SYS', 'LBACSYS', 'DVSYS', 'DVF', 'SYSMAN_RO',
+      'SYSMAN_BIPLATFORM', 'SYSMAN_MDS', 'SYSMAN_OPSS', 'SYSMAN_STB', 'DBSNMP',
+      'SYSMAN', 'APEX_040200', 'WMSYS', 'SYSDG', 'SYSBACKUP',
+      'SPATIAL_WFS_ADMIN_USR', 'SPATIAL_CSW_ADMIN_US', 'GSMCATUSER', 'OLAPSYS',
+      'SI_INFORMTN_SCHEMA', 'OUTLN', 'ORDSYS', 'ORDDATA', 'OJVMSYS',
+      'ORACLE_OCM', 'MDSYS', 'ORDPLUGINS', 'GSMADMIN_INTERNAL', 'MDDATA',
+      'FLOWS_FILES', 'DIP', 'CTXSYS', 'AUDSYS', 'APPQOSSYS', 'APEX_PUBLIC_USER',
+      'ANONYMOUS', 'SPATIAL_CSW_ADMIN_USR', 'SYSKM', 'SYSMAN_TYPES', 'MGMT_VIEW',
+      'EUS_ENGINE_USER', 'EXFSYS', 'SYSMAN_APM'
+    )
+  )
+  AND privilege NOT IN (
+    'UNLIMITED TABLESPACE', 'REFERENCES', 'INDEX', 'SYSDBA', 'SYSOPER',
+    'CREATE SESSION'
+  )
+  ORDER BY 1, 2;").column('grantee').uniq
+
+  if admin_grantees.empty?
+    impact 0.0
+    describe 'No database accounts hold directly-assigned administrative privileges, control N/A' do
+      skip 'No database accounts hold directly-assigned administrative privileges, control N/A'
+    end
+  else
+    admin_grantees.each do |grantee|
+      describe "Account with directly-assigned administrative privilege(s): #{grantee}" do
+        subject { grantee }
+        it { should be_in input('allowed_dbadmin_users') }
+      end
+    end
   end
 end
