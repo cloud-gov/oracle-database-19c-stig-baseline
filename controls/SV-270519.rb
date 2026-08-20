@@ -84,17 +84,13 @@ The list of special accounts that are excluded from this requirement may not be 
   )
   ORDER BY 1, 2;").column('grantee').uniq
 
-  if admin_grantees.empty?
-    impact 0.0
-    describe 'No database accounts hold directly-assigned administrative privileges, control N/A' do
-      skip 'No database accounts hold directly-assigned administrative privileges, control N/A'
-    end
-  else
-    admin_grantees.each do |grantee|
-      describe "Account with directly-assigned administrative privilege(s): #{grantee}" do
-        subject { grantee }
-        it { should be_in input('allowed_dbadmin_users') }
-      end
-    end
+  # An empty result means NO account holds a directly-assigned administrative
+  # privilege — the DISA requirement is fully satisfied, so this is a PASS (not
+  # N/A). Assert it explicitly rather than skipping, so the compliant state is
+  # counted as passing. When accounts do hold direct admin grants, each must be
+  # in the org-defined allowed_dbadmin_users allowlist or it is a finding.
+  describe 'Database accounts with directly-assigned administrative privileges' do
+    subject { admin_grantees }
+    it { should all(be_in input('allowed_dbadmin_users')) }
   end
 end
