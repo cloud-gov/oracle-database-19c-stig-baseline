@@ -111,11 +111,46 @@ Authorize and document user access requirements to the directory outside of the 
   tag cci: ['CCI-000162', 'CCI-000163', 'CCI-000164']
   tag nist: ['AU-9 a', 'AU-9 a', 'AU-9 a']
 
-  # This control embeds a SQL check (see the "check" text above) and is a
-  # candidate for automated assessment via oracledb_session, but that assertion
-  # has NOT yet been implemented/validated. Mark it skipped PENDING that review +
-  # assessment work rather than leaving it as a silent zero-test pass.
-  describe "SV-270510: automated assessment pending (SQL check not yet implemented)" do
-    skip "SV-270510 is SQL-assessable but not yet automated; skipped pending review and implementation."
+  # SQL TESTS ONLY. This control currently assesses only the in-database portion
+  # of the DISA check: audit records stored in the database, whose access is
+  # governed by object grants on the audit store. Enumerate those grants and fail
+  # if any grantee is outside the authorized allowlist.
+  #   - Standard auditing: object grants on SYS.AUD$ (DBA_TAB_PRIVS, table AUD$).
+  #   - Unified auditing:  object grants on AUDSYS-owned tables (DBA_TAB_PRIVS,
+  #                        owner AUDSYS) — includes AUD$UNIFIED and the
+  #                        *UNIFIED_AUDIT_TRAIL views.
+  # Which trail(s) to assess is selected by the standard_auditing_used /
+  # unified_auditing_used inputs; the set of authorized grantees is
+  # organization-defined and supplied via the allowed_audit_users input.
+  # NOT COVERED: the operating-system-level portions of the DISA check
+  # (audit_file_dest directory permissions, %ORACLE_HOME% comparison) require host
+  # access and are out of scope for this SQL-only assessment.
+  sql = oracledb_session(user: input('user'), password: input('password'), host: input('host'), port: input('port'), service: input('service'), sqlplus_bin: input('sqlplus_bin'))
+
+  allowed_audit_grantees = input('allowed_audit_users')
+
+  audit_grantees = []
+  if input('standard_auditing_used')
+    audit_grantees += sql.query("SELECT grantee FROM dba_tab_privs WHERE table_name = 'AUD$';").column('grantee')
+  end
+  if input('unified_auditing_used')
+    audit_grantees += sql.query("SELECT grantee FROM dba_tab_privs WHERE owner = 'AUDSYS';").column('grantee')
+  end
+  audit_grantees = audit_grantees.uniq
+
+  if audit_grantees.empty?
+    describe 'Grants on the database audit store (AUD$ / AUDSYS tables)' do
+      subject { audit_grantees }
+      it 'expose the audit records to no unauthorized grantee' do
+        expect(audit_grantees).to be_empty
+      end
+    end
+  else
+    audit_grantees.each do |grantee|
+      describe "Grantee with privileges on the database audit store: #{grantee}" do
+        subject { grantee }
+        it { should be_in allowed_audit_grantees }
+      end
+    end
   end
 end
