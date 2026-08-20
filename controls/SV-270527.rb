@@ -75,6 +75,7 @@ Document authorized privilege assignments with the WITH ADMIN OPTION in the syst
     'FLOWS_FILES', 'DIP', 'CTXSYS', 'AUDSYS', 'APPQOSSYS', 'APEX_PUBLIC_USER',
     'ANONYMOUS', 'SPATIAL_CSW_ADMIN_USR', 'SYSKM', 'SYSMAN_TYPES', 'MGMT_VIEW',
     'EUS_ENGINE_USER', 'EXFSYS', 'SYSMAN_APM',
+    'FLOWS_040100', 'OWBSYS', 'WKPROXY', 'WK_SYS', 'WK_TEST', 'XS$NULL',
     'AQ_ADMINISTRATOR_ROLE', 'SCHEDULER_ADMIN', 'DBA'
   )
   and grantee not in (select grantee from dba_role_privs where granted_role = 'DBA');").column('grantee').uniq

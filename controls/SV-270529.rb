@@ -79,6 +79,7 @@ Document authorized role assignments with the WITH ADMIN OPTION in the system do
       'FLOWS_FILES', 'DIP', 'CTXSYS', 'AUDSYS', 'APPQOSSYS', 'APEX_PUBLIC_USER',
       'ANONYMOUS', 'SPATIAL_CSW_ADMIN_USR', 'SYSKM', 'SYSMAN_TYPES', 'MGMT_VIEW',
       'EUS_ENGINE_USER', 'EXFSYS', 'SYSMAN_APM',
+      'FLOWS_040100', 'OWBSYS', 'WKPROXY', 'WK_SYS', 'WK_TEST', 'XS$NULL',
       'DBA', 'PDB_DBA', 'RECOVERY_CATALOG_OWNER_VPD'
     )
     and grantee not in
