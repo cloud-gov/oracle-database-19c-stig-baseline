@@ -114,15 +114,19 @@ Authorize and document user access requirements to the directory outside of the 
   # SQL assessment per the DISA check text. On managed AWS RDS the tenant has no
   # OS/host access, so the operating-system-level portions of the check
   # (audit_file_dest directory permissions, %ORACLE_HOME% comparison) are not
-  # tenant-reachable. However, the broker sets audit_trail to a DB destination
-  # (DB,EXTENDED), so audit records are stored IN the database and the check's
-  # SQL portion IS verifiable: enumerate grants on the audit store and fail if any
-  # grantee outside the authorized allowlist can read/modify it.
+  # tenant-reachable. However, audit records are stored IN the database, so the
+  # check's SQL portion IS verifiable: enumerate grants on the audit store and
+  # fail if any grantee outside the authorized allowlist can read/modify it.
   #   - Standard auditing: object grants on SYS.AUD$ (DBA_TAB_PRIVS, table AUD$).
   #   - Unified auditing:  object grants on AUDSYS-owned tables (DBA_TAB_PRIVS,
-  #                        owner AUDSYS).
-  # The set of authorized grantees is organization-defined (DBAs, auditors, the
-  # audit/software-owner accounts) and supplied via the allowed_audit_users input.
+  #                        owner AUDSYS) — includes AUD$UNIFIED and the
+  #                        *UNIFIED_AUDIT_TRAIL views.
+  # RDS for Oracle runs unified auditing in MIXED mode (pure mode needs a binary
+  # relink with uniaud_on, unsupported on RDS — AWS "Security auditing in Amazon
+  # RDS for Oracle, Part 1"), so the AUDSYS grants are the relevant trail here.
+  # The set of authorized grantees is organization-defined (Oracle built-in audit
+  # roles, the RDS admin, the DBAs/auditors, and the audit-store owner accounts)
+  # and supplied via the allowed_audit_users input.
   sql = oracledb_session(user: input('user'), password: input('password'), host: input('host'), port: input('port'), service: input('service'), sqlplus_bin: input('sqlplus_bin'))
 
   allowed_audit_grantees = input('allowed_audit_users')
