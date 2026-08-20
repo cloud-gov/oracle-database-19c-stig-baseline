@@ -74,17 +74,12 @@ Document authorized role assignments with the WITH ADMIN OPTION in the system do
     (select grantee from dba_role_privs
      where granted_role = 'DBA')
     order by grantee;").column('grantee').uniq
-  if users_with_admin_option.empty?
-    impact 0.0
-    describe 'There are no oracle users with the admin option, therefore control N/A' do
-      skip 'There are no oracle users with the admin option, therefore control N/A'
-    end
-  else
-    users_with_admin_option.each do |user|
-      describe "oracle users with admin option: #{user}" do
-        subject { user }
-        it { should be_in input('allowed_dbadmin_users') }
-      end
-    end
+  # An empty result means no account holds a ROLE WITH ADMIN OPTION — the
+  # requirement is fully satisfied, so this is a PASS (not N/A). `all` is
+  # vacuously true on an empty array; any grantee outside the org-defined
+  # allowlist is still a finding.
+  describe 'Accounts holding a role WITH ADMIN OPTION' do
+    subject { users_with_admin_option }
+    it { should all(be_in input('allowed_dbadmin_users')) }
   end
 end

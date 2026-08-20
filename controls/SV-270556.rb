@@ -123,17 +123,12 @@ If any owners are returned other than those Oracle provides, ensure those owners
      and ge.user#=oa.grantee#
      and tpm.privilege=oa.privilege#
      and l.file_spec is not null;").column('owner').uniq
-  if dba_users.empty?
-    impact 0.0
-    describe 'There are no oracle DBA users, control N/A' do
-      skip 'There are no oracle DBA users, control N/A'
-    end
-  else
-    dba_users.each do |user|
-      describe "oracle DBA users: #{user}" do
-        subject { user }
-        it { should be_in input('allowed_dbadmin_users') }
-      end
-    end
+  # An empty result means no account has EXECUTE on an external-library
+  # definition — the requirement is fully satisfied, so this is a PASS (not
+  # N/A). `all` is vacuously true on an empty array; any grantee outside the
+  # org-defined allowlist is still a finding.
+  describe 'Accounts with EXECUTE on external-library definitions' do
+    subject { dba_users }
+    it { should all(be_in input('allowed_dbadmin_users')) }
   end
 end

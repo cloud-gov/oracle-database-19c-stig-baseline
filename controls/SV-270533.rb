@@ -64,17 +64,12 @@ If any are not authorized application administration roles, this is a finding."
   and grantee not in
   (select distinct username from dba_users where upper(account_status) like
    '%LOCKED%');").column('grantee').uniq
-  if users_with_dba_role.empty?
-    impact 0.0
-    describe 'There are no oracle users with the dba role, therefore control N/A' do
-      skip 'There are no oracle users with the dba role, therefore control N/A'
-    end
-  else
-    users_with_dba_role.each do |user|
-      describe "oracle users with admin option: #{user}" do
-        subject { user }
-        it { should be_in input('allowed_users_dba_role') }
-      end
-    end
+  # An empty result means no account holds the DBA role by default — the
+  # requirement is fully satisfied, so this is a PASS (not N/A). `all` is
+  # vacuously true on an empty array; any grantee outside the org-defined
+  # allowlist is still a finding.
+  describe 'Accounts holding the DBA role by default' do
+    subject { users_with_dba_role }
+    it { should all(be_in input('allowed_users_dba_role')) }
   end
 end

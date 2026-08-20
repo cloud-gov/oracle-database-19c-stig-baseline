@@ -65,17 +65,12 @@ Document authorized privilege assignments with the WITH ADMIN OPTION in the syst
 
   dba_users = sql.query("select grantee from dba_sys_privs
   where admin_option = 'YES' and grantee not in (select grantee from dba_role_privs where granted_role = 'DBA');").column('grantee').uniq
-  if dba_users.empty?
-    impact 0.0
-    describe 'There are no oracle DBA users, control N/A' do
-      skip 'There are no oracle DBA users, control N/A'
-    end
-  else
-    dba_users.each do |user|
-      describe "oracle DBA users: #{user}" do
-        subject { user }
-        it { should be_in input('allowed_dbadmin_users') }
-      end
-    end
+  # An empty result means no non-DBA account holds a system privilege WITH ADMIN
+  # OPTION — the requirement is fully satisfied, so this is a PASS (not N/A).
+  # `all` is vacuously true on an empty array; any grantee outside the org-defined
+  # allowlist is still a finding.
+  describe 'Accounts holding a system privilege WITH ADMIN OPTION' do
+    subject { dba_users }
+    it { should all(be_in input('allowed_dbadmin_users')) }
   end
 end
