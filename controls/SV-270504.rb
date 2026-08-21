@@ -167,11 +167,22 @@ AUDIT POLICY <policy_name> BY <user> WHENEVER NOT SUCCESSFUL;"
   tag cci: ['CCI-000172']
   tag nist: ['AU-12 c']
 
-  # This control embeds a SQL check (see the "check" text above) and is a
-  # candidate for automated assessment via oracledb_session, but that assertion
-  # has NOT yet been implemented/validated. Mark it skipped PENDING that review +
-  # assessment work rather than leaving it as a silent zero-test pass.
-  describe "SV-270504: automated assessment pending (SQL check not yet implemented)" do
-    skip "SV-270504 is SQL-assessable but not yet automated; skipped pending review and implementation."
+  # Manual Review (generic case). The DISA check asks whether auditing covers the
+  # entire DOD-selected list of auditable events (privilege changes, security-
+  # object access, logon/logoff, parameter changes, account administration, etc.).
+  # Confirming that the *full* DOD event set is covered is an organizational /
+  # documentation determination: which named unified-audit policies (and any
+  # site-specific object or FGA policies) must be enabled is site-selected, and the
+  # STIG explicitly tags this control 'documentable'. There is no single portable
+  # SQL predicate that proves the complete DOD list is satisfied for an arbitrary
+  # deployment, so the generic baseline marks this a Manual Review rather than a
+  # silent zero-test pass. Platform-specific deployments (e.g. AWS RDS) overlay a
+  # concrete SQL assertion against their known default policy set.
+  describe 'SV-270504: manual review required' do
+    skip 'Manual review: confirm the enabled unified-audit policies (and any ' \
+         'site-specific object/FGA policies) cover the full DOD-selected list of ' \
+         'auditable events per the system documentation. The required event set is ' \
+         'organization-defined and this control is documentable; deployment-specific ' \
+         'profiles (e.g. AWS RDS) overlay a concrete SQL assertion.'
   end
 end
