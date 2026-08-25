@@ -30,11 +30,22 @@ Note: Do not revoke the system-generated grants such as those found on SYS_PLSQL
   tag cci: ['CCI-000366']
   tag nist: ['CM-6 b']
 
-  # This control embeds a SQL check (see the "check" text above) and is a
-  # candidate for automated assessment via oracledb_session, but that assertion
-  # has NOT yet been implemented/validated. Mark it skipped PENDING that review +
-  # assessment work rather than leaving it as a silent zero-test pass.
-  describe "SV-270523: automated assessment pending (SQL check not yet implemented)" do
-    skip "SV-270523 is SQL-assessable but not yet automated; skipped pending review and implementation."
+  sql = oracledb_session(user: input('user'), password: input('password'), host: input('host'), port: input('port'), service: input('service'), sqlplus_bin: input('sqlplus_bin'))
+
+  # DISA V1R5 check query. A finding is any grantee (that is not an object owner
+  # and not a DBA-role holder) that holds a table privilege WITH GRANT OPTION.
+  # System-generated SYS_PLSQL_% shadow-type grants are excluded per the STIG
+  # note (revoking them can break Pipelined Table Functions).
+  grantable_privs = sql.query("select grantee||': '||owner||'.'||table_name
+    from dba_tab_privs
+    where grantable = 'YES'
+    and grantee not in (select distinct owner from dba_objects)
+    and grantee not in (select grantee from dba_role_privs where granted_role = 'DBA')
+    and table_name not like 'SYS_PLSQL_%'
+    order by grantee;").column("grantee||': '||owner||'.'||table_name")
+
+  describe 'Non-DBA / non-object-owner accounts holding a table privilege WITH GRANT OPTION' do
+    subject { grantable_privs }
+    it { should be_empty }
   end
 end
