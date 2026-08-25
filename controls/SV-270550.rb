@@ -37,11 +37,31 @@ Note: It is necessary to create a customized replacement for the password valida
   tag cci: ['CCI-000366']
   tag nist: ['CM-6 b']
 
-  # This control embeds a SQL check (see the "check" text above) and is a
-  # candidate for automated assessment via oracledb_session, but that assertion
-  # has NOT yet been implemented/validated. Mark it skipped PENDING that review +
-  # assessment work rather than leaving it as a silent zero-test pass.
-  describe "SV-270550: automated assessment pending (SQL check not yet implemented)" do
-    skip "SV-270550 is SQL-assessable but not yet automated; skipped pending review and implementation."
+  sql = oracledb_session(user: input('user'), password: input('password'), host: input('host'), port: input('port'), service: input('service'), sqlplus_bin: input('sqlplus_bin'))
+
+  # Per the check text, a profile is a finding when FAILED_LOGIN_ATTEMPTS is
+  # greater than the org-defined maximum consecutive invalid logon attempts
+  # (three per the STIG; carried in the failed_logon_attempts input). UNLIMITED
+  # is likewise a finding (it exceeds the bound). Assess every profile in use.
+  query = %{
+    SELECT PROFILE, RESOURCE_NAME, LIMIT FROM DBA_PROFILES WHERE PROFILE =
+  '%<profile>s' AND RESOURCE_NAME = 'FAILED_LOGIN_ATTEMPTS'
+  }
+
+  user_profiles = sql.query('SELECT profile FROM dba_users;').column('profile').uniq
+
+  user_profiles.each do |profile|
+    failed_login_attempts = sql.query(format(query, profile: profile)).column('limit')
+
+    describe "The oracle database failed login attempts limit for profile: #{profile}" do
+      subject { failed_login_attempts }
+      it { should_not cmp 'UNLIMITED' }
+      it { should cmp <= input('failed_logon_attempts') }
+    end
+  end
+  if user_profiles.empty?
+    describe 'There are no user profiles, therefore this control is NA' do
+      skip 'There are no user profiles, therefore this control is NA'
+    end
   end
 end
