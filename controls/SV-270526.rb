@@ -78,11 +78,20 @@ https://docs.oracle.com/en/database/oracle/oracle-database/19/refrn/REMOTE_LOGIN
   tag cci: ['CCI-000366']
   tag nist: ['CM-6 b']
 
-  # This control embeds a SQL check (see the "check" text above) and is a
-  # candidate for automated assessment via oracledb_session, but that assertion
-  # has NOT yet been implemented/validated. Mark it skipped PENDING that review +
-  # assessment work rather than leaving it as a silent zero-test pass.
-  describe "SV-270526: automated assessment pending (SQL check not yet implemented)" do
-    skip "SV-270526 is SQL-assessable but not yet automated; skipped pending review and implementation."
+  # The DISA check has two parts: (1) the REMOTE_LOGIN_PASSWORDFILE parameter must
+  # be EXCLUSIVE or NONE (a pure SQL predicate against v$parameter), and (2) OS
+  # permissions on the password file must exclude world/everyone. Part (2) is an
+  # OS/filesystem review not reachable via SQL (and, on managed RDS, owned by the
+  # platform). This baseline control asserts the SQL-verifiable part (part 1),
+  # modeled on SV-270524/SV-270525. The OS-permission portion is dispositioned in
+  # the overlay as not_applicable_rds; on a self-managed host it must be verified
+  # separately by an OS check.
+  sql = oracledb_session(user: input('user'), password: input('password'), host: input('host'), port: input('port'), service: input('service'), sqlplus_bin: input('sqlplus_bin'))
+
+  parameter = sql.query("select value from v$parameter where upper(name) = 'REMOTE_LOGIN_PASSWORDFILE';").column('value')
+
+  describe 'The oracle database REMOTE_LOGIN_PASSWORDFILE parameter' do
+    subject { parameter }
+    it { should be_in %w(EXCLUSIVE NONE) }
   end
 end
