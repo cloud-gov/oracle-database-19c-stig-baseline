@@ -67,9 +67,15 @@ Refer to My Oracle Support Document 948061.1 for more on the chopt command.'
 
   sql = oracledb_session(user: input('user'), password: input('password'), host: input('host'), port: input('port'), service: input('service'), sqlplus_bin: input('sqlplus_bin'))
 
-  list_of_installed_components_integrated_into_dbms = sql.query("SELECT parameter, value
+  # Only components whose value is TRUE are actually installed/enabled. The STIG
+  # check: "TRUE means that the option is installed... If any unused components or
+  # features are listed by the query as TRUE, this is a finding." Filtering on
+  # value='TRUE' in SQL ensures a component reported FALSE (not installed) is not
+  # flagged; selecting only the parameter column then yields the installed set.
+  list_of_installed_components_integrated_into_dbms = sql.query("SELECT parameter
   from v$option
-  where parameter in
+  where value = 'TRUE'
+  and parameter in
   (
   'Data Mining',
   'Oracle Database Extensions for .NET',
@@ -78,9 +84,13 @@ Refer to My Oracle Support Document 948061.1 for more on the chopt command.'
   'Real Application Testing'
   );").column('parameter').uniq
   if list_of_installed_components_integrated_into_dbms.empty?
-    impact 0.0
-    describe 'There are no oracle database components integrated into the DBMS, control N/A' do
-      skip 'TThere are no oracle database components integrated into the DBMS, control N/A'
+    # No integrated components are enabled (all report value=FALSE), so there is
+    # nothing to disable and the control passes. A passing describe is used rather
+    # than a conditional `impact 0.0` — `impact` is a control-definition method and
+    # calling it inside the runtime body raises NoMethodError.
+    describe 'Unused integrated Oracle database components that are enabled (value=TRUE)' do
+      subject { list_of_installed_components_integrated_into_dbms }
+      it { should be_empty }
     end
   else
     list_of_installed_components_integrated_into_dbms.each do |component|
