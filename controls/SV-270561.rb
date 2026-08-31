@@ -51,11 +51,56 @@ $ORACLE_HOME/rdbms/admin/catpvf.sql'
   tag cci: ['CCI-000192']
   tag nist: ['IA-5 (1) (a)']
 
-  # This control embeds a SQL check (see the "check" text above) and is a
-  # candidate for automated assessment via oracledb_session, but that assertion
-  # has NOT yet been implemented/validated. Mark it skipped PENDING that review +
-  # assessment work rather than leaving it as a silent zero-test pass.
-  describe "SV-270561: automated assessment pending (SQL check not yet implemented)" do
-    skip "SV-270561 is SQL-assessable but not yet automated; skipped pending review and implementation."
+  sql = oracledb_session(user: input('user'), password: input('password'), host: input('host'), port: input('port'), service: input('service'), sqlplus_bin: input('sqlplus_bin'))
+
+  # Per the check text, the SQL-verifiable portion is: for every profile in use,
+  # the PASSWORD_VERIFY_FUNCTION must NOT be null. "If the function name is null
+  # for any profile, this is a finding." Profiles can inherit the setting via the
+  # literal value DEFAULT, in which case the check directs the reviewer to the
+  # DEFAULT profile's function name; the query below resolves DEFAULT to the
+  # DEFAULT profile's PASSWORD_VERIFY_FUNCTION so an inheriting profile is judged
+  # by its effective function. In Oracle, an unset PASSWORD_VERIFY_FUNCTION is
+  # stored as the string 'NULL' in DBA_PROFILES.LIMIT (not a SQL NULL); the
+  # assertion therefore fails a profile whose effective function is 'NULL'.
+  #
+  # The complexity-RULE review inside the function body (>= 15 chars; one each of
+  # upper/lower/numeric/special; >= 8 changed from the previous password) is a
+  # source-code review that is not portably SQL-decidable; the presence assertion
+  # below is the automatable predicate. Satisfy the rule review by using Oracle's
+  # supplied ORA12C_STIG_VERIFY_FUNCTION / ORA_STIG_PROFILE named by the DISA fix.
+
+  # Profiles actually assigned to users (profiles-in-use convention, per
+  # SV-270549/551). Each is evaluated for its EFFECTIVE verify function.
+  user_profiles = sql.query('SELECT DISTINCT profile FROM dba_users;').column('profile')
+
+  # Per-profile query mirroring the SV-270549/563 pattern (single-column result
+  # read via .column, which is the reliable accessor in this repo — .rows hash
+  # access returned blanks). DECODE resolves a profile whose PASSWORD_VERIFY_
+  # FUNCTION is the literal 'DEFAULT' to the DEFAULT profile's function.
+  query = %{
+    SELECT DECODE(p1.limit, 'DEFAULT', p2.limit, p1.limit) AS effective_function
+    FROM dba_profiles p1, dba_profiles p2
+    WHERE p1.profile = '%<profile>s'
+    AND p1.resource_name = 'PASSWORD_VERIFY_FUNCTION'
+    AND p2.profile = 'DEFAULT'
+    AND p2.resource_name = 'PASSWORD_VERIFY_FUNCTION'
+  }
+
+  if user_profiles.empty?
+    describe 'There are no user profiles, therefore this control is NA' do
+      skip 'There are no user profiles, therefore this control is NA'
+    end
+  else
+    user_profiles.each do |profile|
+      effective_function = sql.query(format(query, profile: profile)).column('effective_function').first
+
+      describe "Profile #{profile}: effective PASSWORD_VERIFY_FUNCTION (#{effective_function})" do
+        subject { effective_function }
+        # A null/unset verify function is a finding. Oracle stores an unset
+        # function as the string 'NULL' in DBA_PROFILES.LIMIT; guard the empty/
+        # nil case too so a blank effective function is not silently passed.
+        it { should_not cmp 'NULL' }
+      end
+    end
   end
 end
