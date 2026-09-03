@@ -41,11 +41,48 @@ $ORACLE_HOME/rdbms/admin/catpvf.sql'
   tag cci: ['CCI-004061']
   tag nist: ['IA-5 (1) (b)']
 
-  # This control embeds a SQL check (see the "check" text above) and is a
-  # candidate for automated assessment via oracledb_session, but that assertion
-  # has NOT yet been implemented/validated. Mark it skipped PENDING that review +
-  # assessment work rather than leaving it as a silent zero-test pass.
-  describe "SV-270587: automated assessment pending (SQL check not yet implemented)" do
-    skip "SV-270587 is SQL-assessable but not yet automated; skipped pending review and implementation."
+  sql = oracledb_session(user: input('user'), password: input('password'), host: input('host'), port: input('port'), service: input('service'), sqlplus_bin: input('sqlplus_bin'))
+  approved_password_verify_functions = input('approved_password_verify_functions').map { |function| function.to_s.strip.upcase }
+
+  # Sibling of SV-270561 (IA-5(1)(a)): SV-270587 (IA-5(1)(b)) has the same
+  # SQL-verifiable null check over SYS.DBA_PROFILES, plus a function-code review
+  # that is not portably SQL-decidable. Require each profile's effective
+  # PASSWORD_VERIFY_FUNCTION to be non-null and explicitly approved by the caller.
+
+  # Profiles actually assigned to users (profiles-in-use convention, per
+  # SV-270549/551/561). Resolve DEFAULT in one query and encode both values in one
+  # column so we can use the reliable .column accessor without interpolating
+  # profile names back into SQL.
+  profile_functions = sql.query(%{
+    SELECT DISTINCT
+           u.profile || '|' || DECODE(p.limit, 'DEFAULT', dp.limit, p.limit) AS profile_function
+    FROM dba_users u
+    JOIN dba_profiles p
+      ON p.profile = u.profile
+     AND p.resource_name = 'PASSWORD_VERIFY_FUNCTION'
+    JOIN dba_profiles dp
+      ON dp.profile = 'DEFAULT'
+     AND dp.resource_name = 'PASSWORD_VERIFY_FUNCTION'
+    ORDER BY u.profile
+  }).column('profile_function')
+
+  if profile_functions.empty?
+    describe 'There are no user profiles, therefore this control is NA' do
+      skip 'There are no user profiles, therefore this control is NA'
+    end
+  else
+    profile_functions.each do |profile_function|
+      profile, effective_function = profile_function.to_s.split('|', 2)
+      effective_function = effective_function.to_s.strip
+
+      describe "Profile #{profile}: effective PASSWORD_VERIFY_FUNCTION (#{effective_function})" do
+        subject { effective_function.upcase }
+        # A null/unset verify function is a finding. Oracle stores an unset
+        # function as the string 'NULL' in DBA_PROFILES.LIMIT.
+        it { should_not be_empty }
+        it { should_not cmp 'NULL' }
+        it { should be_in approved_password_verify_functions }
+      end
+    end
   end
 end
