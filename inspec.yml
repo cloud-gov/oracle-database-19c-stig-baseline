@@ -38,6 +38,12 @@ inputs:
     value: ''
     sensitive: true
 
+  - name: approved_password_verify_functions
+    description: 'Approved password verification functions for SV-270587'
+    type: Array
+    value:
+      - ORA12C_STIG_VERIFY_FUNCTION
+
   - name: standard_auditing_used
     description: 'Set to true if standard auditing is used'
     type: Boolean

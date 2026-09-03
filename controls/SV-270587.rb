@@ -42,48 +42,46 @@ $ORACLE_HOME/rdbms/admin/catpvf.sql'
   tag nist: ['IA-5 (1) (b)']
 
   sql = oracledb_session(user: input('user'), password: input('password'), host: input('host'), port: input('port'), service: input('service'), sqlplus_bin: input('sqlplus_bin'))
+  approved_password_verify_functions = input('approved_password_verify_functions').map { |function| function.to_s.strip.upcase }
 
-  # Sibling of SV-270561 (IA-5(1)(a)): the SV-270587 (IA-5(1)(b)) check text is the
-  # SAME SQL predicate over SYS.DBA_PROFILES — "If the function name is null for any
-  # profile, this is a finding." The additional IA-5(1)(b) requirement (reject
-  # commonly-used/expected/compromised passwords) is enforced by the CODE inside the
-  # verify function, which is a source-code review that is not portably
-  # SQL-decidable. Satisfy that review by using Oracle's supplied
-  # ORA12C_STIG_VERIFY_FUNCTION / ORA_STIG_PROFILE named by the DISA fix. The
-  # automatable predicate is the same as SV-270561: every profile in use must have a
-  # non-null effective PASSWORD_VERIFY_FUNCTION.
+  # Sibling of SV-270561 (IA-5(1)(a)): SV-270587 (IA-5(1)(b)) has the same
+  # SQL-verifiable null check over SYS.DBA_PROFILES, plus a function-code review
+  # that is not portably SQL-decidable. Require each profile's effective
+  # PASSWORD_VERIFY_FUNCTION to be non-null and explicitly approved by the caller.
 
   # Profiles actually assigned to users (profiles-in-use convention, per
-  # SV-270549/551/561). Each is evaluated for its EFFECTIVE verify function.
-  user_profiles = sql.query('SELECT DISTINCT profile FROM dba_users;').column('profile')
+  # SV-270549/551/561). Resolve DEFAULT in one query and encode both values in one
+  # column so we can use the reliable .column accessor without interpolating
+  # profile names back into SQL.
+  profile_functions = sql.query(%{
+    SELECT DISTINCT
+           u.profile || '|' || DECODE(p.limit, 'DEFAULT', dp.limit, p.limit) AS profile_function
+    FROM dba_users u
+    JOIN dba_profiles p
+      ON p.profile = u.profile
+     AND p.resource_name = 'PASSWORD_VERIFY_FUNCTION'
+    JOIN dba_profiles dp
+      ON dp.profile = 'DEFAULT'
+     AND dp.resource_name = 'PASSWORD_VERIFY_FUNCTION'
+    ORDER BY u.profile
+  }).column('profile_function')
 
-  # Per-profile query mirroring SV-270561. DECODE resolves a profile whose
-  # PASSWORD_VERIFY_FUNCTION is the literal 'DEFAULT' to the DEFAULT profile's
-  # function. Read via .column (the reliable accessor in this repo — .rows hash
-  # access returned blanks).
-  query = %{
-    SELECT DECODE(p1.limit, 'DEFAULT', p2.limit, p1.limit) AS effective_function
-    FROM dba_profiles p1, dba_profiles p2
-    WHERE p1.profile = '%<profile>s'
-    AND p1.resource_name = 'PASSWORD_VERIFY_FUNCTION'
-    AND p2.profile = 'DEFAULT'
-    AND p2.resource_name = 'PASSWORD_VERIFY_FUNCTION'
-  }
-
-  if user_profiles.empty?
+  if profile_functions.empty?
     describe 'There are no user profiles, therefore this control is NA' do
       skip 'There are no user profiles, therefore this control is NA'
     end
   else
-    user_profiles.each do |profile|
-      effective_function = sql.query(format(query, profile: profile)).column('effective_function').first
+    profile_functions.each do |profile_function|
+      profile, effective_function = profile_function.to_s.split('|', 2)
+      effective_function = effective_function.to_s.strip
 
       describe "Profile #{profile}: effective PASSWORD_VERIFY_FUNCTION (#{effective_function})" do
-        subject { effective_function }
+        subject { effective_function.upcase }
         # A null/unset verify function is a finding. Oracle stores an unset
-        # function as the string 'NULL' in DBA_PROFILES.LIMIT; guard the empty/
-        # nil case too so a blank effective function is not silently passed.
+        # function as the string 'NULL' in DBA_PROFILES.LIMIT.
+        it { should_not be_empty }
         it { should_not cmp 'NULL' }
+        it { should be_in approved_password_verify_functions }
       end
     end
   end
