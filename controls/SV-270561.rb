@@ -92,13 +92,15 @@ $ORACLE_HOME/rdbms/admin/catpvf.sql'
     end
   else
     user_profiles.each do |profile|
-      effective_function = sql.query(format(query, profile: profile)).column('effective_function').first
+      effective_function = sql.query(format(query, profile: profile)).column('effective_function').first.to_s
 
       describe "Profile #{profile}: effective PASSWORD_VERIFY_FUNCTION (#{effective_function})" do
         subject { effective_function }
         # A null/unset verify function is a finding. Oracle stores an unset
-        # function as the string 'NULL' in DBA_PROFILES.LIMIT; guard the empty/
-        # nil case too so a blank effective function is not silently passed.
+        # function as the string 'NULL' in DBA_PROFILES.LIMIT; the be_empty guard
+        # also fails a DECODE that yields a SQL NULL (blank field) that cmp 'NULL'
+        # alone would pass silently. Kept in sync with sibling SV-270587.
+        it { should_not be_empty }
         it { should_not cmp 'NULL' }
       end
     end
