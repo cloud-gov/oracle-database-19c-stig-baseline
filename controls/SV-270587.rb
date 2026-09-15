@@ -63,7 +63,7 @@ $ORACLE_HOME/rdbms/admin/catpvf.sql'
     JOIN dba_profiles dp
       ON dp.profile = 'DEFAULT'
      AND dp.resource_name = 'PASSWORD_VERIFY_FUNCTION'
-    ORDER BY u.profile
+    ORDER BY 1
   }).column('profile_function')
 
   if profile_functions.empty?
@@ -78,7 +78,10 @@ $ORACLE_HOME/rdbms/admin/catpvf.sql'
       describe "Profile #{profile}: effective PASSWORD_VERIFY_FUNCTION (#{effective_function})" do
         subject { effective_function.upcase }
         # A null/unset verify function is a finding. Oracle stores an unset
-        # function as the string 'NULL' in DBA_PROFILES.LIMIT.
+        # function as the string 'NULL' in DBA_PROFILES.LIMIT. The be_empty guard
+        # is deliberately stricter than merged SV-270561: DECODE returning a SQL
+        # NULL yields a blank field ('PROFILE|') that cmp 'NULL' alone would let
+        # pass silently. Follow-up: add the same guard to SV-270561 so they match.
         it { should_not be_empty }
         it { should_not cmp 'NULL' }
         it { should be_in approved_password_verify_functions }

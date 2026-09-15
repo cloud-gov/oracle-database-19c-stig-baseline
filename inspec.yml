@@ -39,7 +39,11 @@ inputs:
     sensitive: true
 
   - name: approved_password_verify_functions
-    description: 'Approved password verification functions for SV-270587'
+    description: >-
+      Password verification functions accepted by SV-270587. A custom function is
+      the STIG's expected path (ORA12C_STIG_VERIFY_FUNCTION is the documented
+      starting point), so any site-customised function name MUST be added here
+      after code review or the control will fail.
     type: Array
     value:
       - ORA12C_STIG_VERIFY_FUNCTION
